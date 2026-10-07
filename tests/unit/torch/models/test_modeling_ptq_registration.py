@@ -30,8 +30,10 @@ pytest.importorskip("transformers")
 
 FIRST_IMPORTS = [
     "modelopt.torch.models.falcon.modeling_ptq",
+    "modelopt.torch.models.gpt_oss.modeling_ptq",
     "modelopt.torch.models.llama4.modeling_ptq",
     "modelopt.torch.models.nemotron_h.modeling_ptq",
+    "modelopt.torch.models.qwen3_vl_moe.modeling_ptq",
     "modelopt.torch.quantization",
     "modelopt.torch.export",
 ]
@@ -62,6 +64,22 @@ except ImportError:
     pass
 else:
     assert Llama4TextExperts in QuantModuleRegistry, "Llama4TextExperts not registered"
+
+try:
+    from transformers.models.gpt_oss.modeling_gpt_oss import GptOssExperts
+except ImportError:
+    pass
+else:
+    assert GptOssExperts in QuantModuleRegistry, "GptOssExperts not registered"
+try:
+    from transformers.models.qwen3_vl_moe.modeling_qwen3_vl_moe import Qwen3VLMoeTextExperts
+except ImportError:
+    pass
+else:
+    # Only the pre-5.12 layout gets the explicit wrapper; the fused layout (marked by
+    # ``_apply_gate``) is left to register_fused_experts_on_the_fly.
+    explicit = not hasattr(Qwen3VLMoeTextExperts, "_apply_gate")
+    assert (Qwen3VLMoeTextExperts in QuantModuleRegistry) == explicit, "Qwen3VLMoeTextExperts"
 
 assert register_falcon_linears_on_the_fly in CUSTOM_MODEL_PLUGINS, "Falcon callback missing"
 
